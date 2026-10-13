@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# prerequisites: dos2unix
+# WARNING: ALWAYS first do: mkdir orig; cp * orig; ...
+
+echo "Convert text files sequence: dos2unix, utf8 cleanup, leading spaces removal, paragraph split, squeeze blank lines, paragraph fold."
+
+rmi () { rm "$i" ; }
+
+for i in "$@"; do
+	next="$i"
+	echo "Converting (dos2unix, utf8 cleanup, leading spaces) ____ $next"
+
+	# basic conversion:
+	dos2unix -q -f "$i"
+
+	# utf8 cleanup:
+	iconv -c -f UTF-8 -t UTF-8 "$i" -o "$i".utf8
+	rmi; i="$i".utf8
+
+	# remove leading spaces from lines in a text file:
+	sed 's/^[[:blank:]]*//' "$i" > "$i".rmspc
+	rmi; i="$i".rmspc
+
+	# insert blank lines (paragraph end) when a line ends in . or ". " or '."' or '." ':
+	sed -E 's/\. ?$/.\n/' "$i" > "$i".dot
+	rmi; i="$i".dot
+	sed -E 's/\." ?$/."\n/' "$i" > "$i".dotquote
+	rmi; i="$i".dotquote
+
+	# squeeze multiple blank lines to single blank line:
+	cat -s "$i" > "$i".sqz
+	rmi; i="$i".sqz
+
+	# fold multiple lines into one para - need to be separated by at least 1 blank line:
+	# (fmt is currently limited to 2500 chars per para)
+	fmt -c -w2500 "$i" > "$i".fold
+	rmi; i="$i".fold
+
+	# finally, mv our temp file onto the original file - SHOULD do this on copies/tmp dir!:
+	mv -f "$i" "$next"
+
+done

@@ -100,6 +100,7 @@ FILES
 - `vids` - heuristic script to find all video files in a dir hierarchy from one or more starting points, and list them to stdout in a format safe to use in a pipe
 - `mpv` - very simple mpv wrapper adding `--force-window` option, so at least a black window shows when audio-only media is playing
 - `image_info` - exiv2 wrapper to print a line of text to stdout about an image (filename, XxY, size etc) - also useful with `feh` image viewer
+- `clean-textfiles` - cleanup text files, do: 1) dos2unix 2) utf8 cleanup 3) leading spaces removal 4) paragraph split 5) squeeze blank lines 6) paragraph fold
 
 
 DISCUSSION
