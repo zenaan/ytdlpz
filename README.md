@@ -84,9 +84,9 @@ pipx inject yt-dlp secretstorage cryptography curl-cffi
 ```
 
 
-FILES
------
-- `yt-dlp` [GitHub project](https://github.com/yt-dlp/yt-dlp)
+FILES + LINKS
+-------------
+- [yt-dlp GitHub project](https://github.com/yt-dlp/yt-dlp)
 - `ytdlpz` - the wrapper script
 - `yth-dlpz` - symlink to quickly download max-quality video
 - `ytl-dlpz` - symlink to quickly download min-bitrate video and max-quality audio
