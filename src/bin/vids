@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# "vids" command, a bash script
+
+# See also: pick a random letter a-z: `shuf -ern1 {a..z}`
+#echo "shuf -ern1 {a..z}"
+
+# This script intends to do the following:
+# - search all files from current directory, including subdirs
+# - find all videos
+# - output all the video filenames in a plain and usable format
+
+# Usage:
+#
+# List all videos starting from current directory:
+#   vids
+#
+# Run mpv video player, giving it the output of this script:
+# WARNING: if your current directory search finds too many videos,
+# then xargs will split the command into multiple command instances,
+# and when you close the first mpv instance, the second one then opens, etc
+#
+#   vids | xargs mpv --shuffle
+
+#shopt -s globstar  # enable ** to recurse all the directories
+
+#files=()  # create array variable
+#
+#for f in **; do  # glob pattern match all .js files
+#  if [[ ! "$f" =~ "/" ]]; then  # regex match all paths that do NOT contain an 'assets' directory
+#    files+=("$f")  # add it to the files array
+#  fi
+#done
+#
+#printf %s\\n "${files[@]}"  # print the files array
+
+#_______________________
+#PATHX="/path/to/my/files"
+#find "${PATHX}" -maxdepth 1 -type f -name "*.csv" |
+#(   fns=
+#    while read d; do
+#        FN=$(echo -n "${d}" | cut -d/ -f3 | cut -d. -f1)
+#        echo "${FN}<-read.csv(\"${PATHX}/${FN}.csv\",header=TRUE)"
+#        # <snip> etc .etc. etc.
+#        echo "${FN}_2y<-tail(${FN}_log,730)"
+#        fns+=",${FN}_2y"
+#    done
+#    echo "df<-data.frame(${fns:1})"
+#)
+
+
+#________________________________________
+# may be add 'x' to the inclusion char set for m--b/* ??
+
+# protip: how to test remainder files BEFORE piping to media player!:
+# vids|egrep -iv 'mp4$|mkv$|webm$|mpe?g$|wmv$|avi$|3gp$|flv$|mov$|rm$|m4v$'
+# note: readarray and mapfile are synonyms in bash
+
+SORT=no
+
+get_args () {
+	case "$1" in
+		-s) SORT=yes ; shift ;;
+	esac
+	for i in "$@"; do
+		readarray -d '' -O ${#files[@]} files < <(find "$i" -type f -print0 | egrep -zi '[.]..[viVI4a]$|wmf$|mpe?g$|webm$|3gp$|rm$' | egrep -ziv 'csv$|sfv$|wav$|ini$')
+	done
+}
+
+# convert the filenames into a format safe for using on the command line/ in a pipe:
+normalize_filenames () { IFS=$'\n' files=($(printf '%q\n' "${files[@]}")) ; }
+
+# optionally sort:
+apply_sort () {
+	case $SORT in
+		yes)
+			#echo sorting __
+			files=($(printf '%s\n' "${files[@]}" | sort))
+			# may need to swap the above line (files=...) with the following (readarray...) to handle spaces in filenames, but may work given we already normalize filenames
+			#readarray -t files < <(printf "%s\n" "${files[@]}" | sort)
+		;;
+	esac
+}
+
+get_args "$@"
+normalize_filenames
+#echo; printf '%s\n' "${files[@]}"; echo ${#files[@]}
+apply_sort
+
+printf '%s\n' "${files[@]}"
+

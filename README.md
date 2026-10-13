@@ -21,6 +21,8 @@ The script symlink names are designed with the leading part optimized for qwerty
 
 `ytl-dlpz Vid_ID` - symlink for default lowest video bitrate + highest audio quality download.
 
+`vids . | xargs mpv --shuffle` - `vids` tries to find all video files from given dir(s), and pipes them in a safe format.
+
 `ytl-dlpz --sub-langs en --write-auto-sub --sub-format srt Vid_ID` - download (including) subtitles.
 
 `ytp-srt+txt Vid_ID` - down subtitles, and convert them into a text file (results in 2 files); if subtitles already downloaded, just create the text only version.
@@ -88,6 +90,8 @@ FILES
 - `libsh-env.sh` - environment utils: `SCRIPT_DIR`
 - `libsh-msg.sh` - output utils: `msg_error()`, `msg_info()` ...
 - `libsh-yt.sh` - yt-dlp utils: `yt_isValidVideoID()` ...
+
+- `vids` - heuristic script to find all video files in a dir hierarchy from one or more starting points, and list them to stdout in a format safe to use in a pipe
 
 
 DISCUSSION
