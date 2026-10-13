@@ -92,6 +92,7 @@ FILES
 - `libsh-yt.sh` - yt-dlp utils: `yt_isValidVideoID()` ...
 
 - `vids` - heuristic script to find all video files in a dir hierarchy from one or more starting points, and list them to stdout in a format safe to use in a pipe
+- `mpv` - very simple mpv wrapper adding `--force-window` option, so at least a black window shows when audio-only media is playing
 
 
 DISCUSSION

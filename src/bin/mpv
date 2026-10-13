@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# mp3 and other files that have no embedded video stream, mpv will not show a window;
+# this can be disconcerting, you then have to locate the terminal to use mpv shortcuts;
+# the --force-window option fixes this:
+
+/usr/bin/mpv --force-window "$@"
+
