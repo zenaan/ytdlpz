@@ -1,7 +1,5 @@
-# ytdlpz
-
-ytdlpz - yt-dlp wrapper(s)
-==========================
+# ytdlpz - yt-dlp wrapper(s)
+============================
 
 `yt-dlp` wrapper script, factored libsh-.. support fns, and symlinks for quick use.
 
