@@ -21,7 +21,7 @@ yt_dumpConf () {
 	#cat "$YTDLPCONF"
 
 	# dump yt-dlp.conf, stripping all comments and blank lines:
-	msg_usage "Args from $YTDLPCONF :"
+	msg_info "Args from $YTDLPCONF :"
 	sed -e 's/#.*//' -e '/^$/d' "$YTDLPCONF"
 
 	# remind user of options to use to download subtitles if wanted:

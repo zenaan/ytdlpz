@@ -1,7 +1,7 @@
 # ytdlpz - yt-dlp wrapper(s)
 ============================
 
-`yt-dlp` wrapper script, factored libsh-.. support fns, and symlinks for quick use.
+`yt-dlp` wrapper script, factored `libsh-..` support fns, and symlinks for quick use.
 
 Terminal output is partially colorized to highlight:
 
@@ -17,14 +17,27 @@ The download step shows a fixed-width 10 char progress bar.
 
 The script symlink names are designed with the leading part optimized for qwerty keyboard and tab-expansion, to make it as quick as possible to download either high quality or low bitrate video.
 
-The script supports symlinks `yth-dlpz` for default highest quality download, and `ytl-dlpz` for default lowest video bitrate + highest audio quality download.
+`yth-dlpz Vid_ID` - symlink for default highest quality download.
 
-I listen to a lot of music, and perhaps 1 in 4 vids I like to archive, but by default with the lowest bitrate video stream and highest quality audio stream - in the land of Youtube and yt-dlp, for audio streams, higher bitrate is considered higher quality, but for videos, better codec is considered better quality regardless of resolution or bitrate, which confused me for a long time until AI eventually explained that to me.
+`ytl-dlpz Vid_ID` - symlink for default lowest video bitrate + highest audio quality download.
 
-Sometimes I also like to download subtitles and just read them rather than listen to the video, and for that there is the symlink `ytp-srt+txt` which will if needed download an english `.srt` subtitles file (if there's not one in the current dir) and convert that .srt file to `.txt` . For conversion to text it uses `perl` which has full Unicode support, so should work reasonably well with all languages, not only English.
+`ytl-dlpz --sub-langs en --write-auto-sub --sub-format srt Vid_ID` - download (including) subtitles.
 
-Also provided is my example `yt-dlp.conf` file, showing my current preferred output file format - I now include most characters so that foreign language filenames don't "collapse" down to a dot and a few underscores, but I still `"\s+" "_"` replace all whitespace with underscores.
-And also in yt-dlp.conf is `--embed-chapters` which I only found recently, and is supported by e.g `mpv` - yee haw!
+`ytp-srt+txt Vid_ID` - down subtitles, and convert them into a text file (results in 2 files); if subtitles already downloaded, just create the text only version.
+
+If I want to choose a format, even a low bitrate format, I always use the "high quality" script WITH the `-F` option:
+
+`yth-dlpz Vid_ID -F` - view available formats, with the best codec grouped at the bottom, then...
+
+`yth-dlpz Vid_ID -f blah+251` - actually download chosen format.
+
+Also provided is my example `yt-dlp.conf` file, showing my current preferred output file format - I now include most characters (I no longer flatten into "use only Windows chars") so that foreign language filenames don't "collapse" down to a dot and a few underscores, but I still `"\s+" "_"` replace all whitespace with underscores.
+
+**NOTE:**  In my yt-dlp.conf is the `--embed-chapters` option I only found recently, which is supported by e.g `mpv` - yee haw!
+
+
+PRO-TIP
+-------
 
 Here is the extract from my example yt-dlp.conf describing remuxing to add embedded chapters to a previously downloaded video:
 
@@ -45,6 +58,7 @@ Here is the extract from my example yt-dlp.conf describing remuxing to add embed
 # yt-dlp --remux-video mkv --embed-chapters -o "Your_Existing_Video_File.webm" "VIDEO_URL"
 ```
 
+
 DEPENDENCIES
 ------------
 
@@ -52,13 +66,14 @@ DEPENDENCIES
 - `yt-dlp`: these days with `yt-dlp` we sometimes have to use `secretstorage` (python) module to get browser cookies, which has to have the yt-dlp module in SAME environment as the secretstorage module; one way to do this is use pipx..., ultimately you need a working `yt-dlp` in your PATH, e.g:
 
 ```
-   # This is just one way to make yt-dlp and modules it depends on, work:
-   # as root:
-   apt install pipx
-   # as user, installing yt-dlp from pipx, then "injecting" the required dependencies:
-   pipx install yt-dlp
-   pipx inject yt-dlp secretstorage cryptography curl-cffi
+# This is just one way to make yt-dlp and modules it depends on, work:
+# as root:
+apt install pipx
+# as user, installing yt-dlp from pipx, then "injecting" the required dependencies:
+pipx install yt-dlp
+pipx inject yt-dlp secretstorage cryptography curl-cffi
 ```
+
 
 FILES
 -----
@@ -73,6 +88,7 @@ FILES
 - `libsh-env.sh` - environment utils: `SCRIPT_DIR`
 - `libsh-msg.sh` - output utils: `msg_error()`, `msg_info()` ...
 - `libsh-yt.sh` - yt-dlp utils: `yt_isValidVideoID()` ...
+
 
 DISCUSSION
 ----------
@@ -97,3 +113,8 @@ Similarly, for lowest-bitrate video and best audio:
 `-f bv+ba/b -S "+vbr,res,lang:en,abr"`
 
 where, as the first sorting preference, you can see we use `vbr` for video bitrate (rather than codec as above), but also invert it (with a `+`) in order to reverse-sort by video bitrate, that is, to give us the LOWest bitrate video stream as the "best": `"+vbr,..."`.
+
+I listen to a lot of music, and perhaps 1 in 4 vids I like to archive, but by default with the lowest bitrate video stream and highest quality audio stream - in the land of Youtube and yt-dlp, for audio streams, higher bitrate is considered higher quality, but for videos, better codec is considered better quality regardless of resolution or bitrate, which confused me for a long time until AI eventually explained that to me.
+
+Sometimes I also like to download subtitles and just read them rather than listen to the video, and for that there is the symlink `ytp-srt+txt` which will if needed download an english `.srt` subtitles file (if there's not one in the current dir) and convert that srt file to `.txt` . For conversion to text it uses `perl` which has full Unicode support, so should work reasonably well with all languages, not only English.
+
