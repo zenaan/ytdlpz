@@ -71,6 +71,7 @@ DEPENDENCIES
 ------------
 
 - GNU Bash
+- `image_info`: depends on `exiv2`
 - `yt-dlp`: these days with `yt-dlp` we sometimes have to use `secretstorage` (python) module to get browser cookies, which has to have the yt-dlp module in SAME environment as the secretstorage module; one way to do this is use pipx..., ultimately you need a working `yt-dlp` in your PATH, e.g:
 
 ```
