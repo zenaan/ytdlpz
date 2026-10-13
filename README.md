@@ -60,6 +60,12 @@ Here is the extract from my example yt-dlp.conf describing remuxing to add embed
 # yt-dlp --remux-video mkv --embed-chapters -o "Your_Existing_Video_File.webm" "VIDEO_URL"
 ```
 
+The `image_info` wrapper for exiv2 can be used e.g in an `feh` image viewer shell alias as follows:
+
+```
+alias feh='feh -x --zoom-step 3 --info ";$HOME/bin/image_info %F"'
+```
+
 
 DEPENDENCIES
 ------------
@@ -93,6 +99,7 @@ FILES
 
 - `vids` - heuristic script to find all video files in a dir hierarchy from one or more starting points, and list them to stdout in a format safe to use in a pipe
 - `mpv` - very simple mpv wrapper adding `--force-window` option, so at least a black window shows when audio-only media is playing
+- `image_info` - exiv2 wrapper to print a line of text to stdout about an image (filename, XxY, size etc) - also useful with `feh` image viewer
 
 
 DISCUSSION

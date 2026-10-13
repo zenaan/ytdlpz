@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Depends: exiv2
+#
+# Note: exiftool is a large slow perl script, exiv2 is fast C++
+#
+# Example feh image viewer alias (you could also put this in a wrapper script):
+# alias feh='feh -x --zoom-step 3 --info ";$HOME/bin/image_info %F"'
+
+# Check if a file argument was passed
+if [ -z "$1" ]; then
+    exit 0
+fi
+
+source libsh-format.sh
+
+IMAGE_PATH="$1"
+
+# 1. Grab file properties using native system commands (Instant)
+FILENAME=$(basename "$IMAGE_PATH")
+FILE_SIZE=$(stat -c %s "$IMAGE_PATH" 2>/dev/null || du -b "$IMAGE_PATH" | awk '{print $1}')
+FILESIZE=$(format_bytes "$FILE_SIZE")
+MODDATE=$(stat -c %y "$IMAGE_PATH" 2>/dev/null | cut -d'.' -f1)
+
+# 2. Extract technical/camera info instantly with exiv2
+# Filter out empty fields and parse line-by-line
+while read -r line; do
+    case "$line" in
+        "Image size"*)     SIZE=$(echo "$line" | awk -F': ' '{print $2}') ;;
+        "Camera model"*)   MODEL=$(echo "$line" | awk -F': ' '{print $2}') ;;
+        "ISO speed"*)      ISO=$(echo "$line" | awk -F': ' '{print $2}') ;;
+        "Exposure time"*)  SHUTTER=$(echo "$line" | awk -F': ' '{print $2}') ;;
+        "Aperture"*)       APERTURE=$(echo "$line" | awk -F': ' '{print $2}') ;;
+    esac
+done < <(exiv2 "$IMAGE_PATH" 2>/dev/null)
+
+# Build the finalized string layout
+OUTPUT="File: ${FILENAME}"
+OUTPUT+=" | Size: ${SIZE:-Unknown}"
+OUTPUT+=" | Disk: ${FILESIZE}"
+#OUTPUT+=" | Modified: ${MODDATE}"
+
+[ -n "$MODEL" ]    && OUTPUT="$OUTPUT | Camera: $MODEL"
+[ -n "$ISO" ]      && OUTPUT="$OUTPUT | ISO: $ISO"
+[ -n "$SHUTTER" ]  && OUTPUT="$OUTPUT | Shutter: $SHUTTER"
+[ -n "$APERTURE" ] && OUTPUT="$OUTPUT | Aperture: $APERTURE"
+
+# Output straight to both endpoints
+echo "$OUTPUT" | tee /dev/tty
+
