@@ -86,7 +86,7 @@ pipx inject yt-dlp secretstorage cryptography curl-cffi
 
 FILES
 -----
-- [GitHub project](https://github.com/yt-dlp/yt-dlp)
+- `yt-dlp` [GitHub project](https://github.com/yt-dlp/yt-dlp)
 - `ytdlpz` - the wrapper script
 - `yth-dlpz` - symlink to quickly download max-quality video
 - `ytl-dlpz` - symlink to quickly download min-bitrate video and max-quality audio
@@ -130,5 +130,7 @@ where, as the first sorting preference, you can see we use `vbr` for video bitra
 
 I listen to a lot of music, and perhaps 1 in 4 vids I like to archive, but by default with the lowest bitrate video stream and highest quality audio stream - in the land of Youtube and yt-dlp, for audio streams, higher bitrate is considered higher quality, but for videos, better codec is considered better quality regardless of resolution or bitrate, which confused me for a long time until AI eventually explained that to me.
 
-Sometimes I also like to download subtitles and just read them rather than listen to the video, and for that there is the symlink `ytp-srt+txt` which will if needed download an english `.srt` subtitles file (if there's not one in the current dir) and convert that srt file to `.txt` . For conversion to text it uses `perl` which has full Unicode support, so should work reasonably well with all languages, not only English.
+Sometimes I also like to download subtitles and just read them rather than listen to the video, and for that there is the symlink `ytp-srt+txt` which will if needed download an english `.srt` subtitles file (if there's not one in the current dir) and convert that srt file to `.txt` and keeping the original srt file.
+
+For conversion to text it uses `perl` which has full Unicode support, so should work reasonably well with all languages, not only English (it's only stripping not-text lines, but to do that it must recognize language characters).
 
