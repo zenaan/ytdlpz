@@ -1,0 +1,196 @@
+#!/bin/bash
+
+# Wrapper for yt-dlp with improved output messages and format sorting.
+#
+# To use: copy to ~/bin/, make executable, and create symlinks to yth-dlpz, ytl-dlpz and ytp-srt+txt
+
+# Optional: add to .bashrc:  subs="--sub-langs en --write-auto-sub --sub-format srt"
+
+. libsh-yt.sh
+
+# "Default" command just dumps yt-dlp.conf, shows you your command line args, and runs yt-dlp:
+ytdlpz () {
+	# comment out if not wanted:
+	yt_dumpConf
+	#msg_usage "Remember \$subs:  " "$SUBS_ARGS --skip-download"
+
+	# show me what the resultant yt-dlp command line sort of looks like (without escapes and quotes):
+	msg_cmd "yt-dlp $*"
+	msg_usage "____________________"
+
+	# the piping through "sed -E" is just to colorize the Merger line in yt-dlp's output,
+	# whilst ignoring the download status updates:
+	#yt-dlp "$@" | sed -u -E "/\[download\]/! s/(^\[Merger\].* \")([^\"]*)(\")/\1\x1b[1;32m\2\x1b[0m\3/"
+	#yt-dlp "$@" | sed -u -z -E 's/(\n\[Merger\] [^\r\n]*")([^"]+)("\r?\n?)/\1\x1b[32m\2\x1b[0m\3/g'
+
+	# To see progress updates, whilst in a pipe (which everything detects,
+	# and still edit the "Merger" line to colorize, we must add a lot of bits:
+	#  - python must be unbuffered: PYTHONUNBUFFERED=1
+	#  - yt-dlp must be forced to show progress updates: --progress
+	#  - yt-dlp must now have its error stream piped to stdout: 2>&1
+	#  - we must use perl instead of sed (sed -u doesn't work well),
+	#  - and we must tell perl to operate unbuffered: BEGIN { $| = 1 }
+	#PYTHONUNBUFFERED=1 yt-dlp --color always --progress "$@" 2>&1 | perl ...
+	# AFTER ALL THAT, AS OF 20260923, THIS STILL DOES NOT WORK!
+	#  - next trying to add stdbuf in the mix, to force 0 buffering (haven't tried this):
+	#PYTHONUNBUFFERED=1 stdbuf -o0 -e0 yt-dlp --color always --progress "$@" 2>&1 | stdbuf -o0 perl ...
+	#  - we must insist on --progress, and piping sterr to tty ("interactive") (still won't work):
+	#yt-dlp --color always --progress "$@" 2>/dev/tty | perl -pe 'BEGIN { $| = 1 } s/(\[Merger\] [^"\n]*")([^"\n]+)(")/\1\e[32m\2\e[0m\3/g'
+	#  - we actually have to also add custom (even if it's the default version) --progress-template
+	#    (cannot use %(progress._bar_str)s in the template, since in a pipeline yt-dlp has no term width):
+#	local ytdlp_progress_template=$'download:\x1b[K\r[download] %(progress._percent_str)s of %(progress._total_bytes_str)s at %(progress._speed_str)s ETA %(progress._eta_str)s'
+#	yt-dlp --color always --progress-template "$ytdlp_progress_template" "$@" 2>/dev/tty |
+#	  perl -pe 'BEGIN { $| = 1 } s/(\[Merger\] [^"\n]*")([^"\n]+)(")/\1\e[32m\2\e[0m\3/g'
+	# Et voi la! yt-dlp output log colorization wrapper Final Boss!
+
+	# AI suggested option for having perl do a progress bar:
+	yt-dlp --color always --progress-template $'PROGRESS:%(progress._percent_str)s:%(progress._total_bytes_str)s:%(progress._speed_str)s:%(progress._eta_str)s\n' "$@" 2>&1 | perl -pe '
+  BEGIN { $| = 1 } 
+  # Step 1: Handle the [Merger] line first if it appears
+  if (/\[Merger\]/) {
+      s/(\[Merger\] [^"\n]*")([^"\n]+)(")/\1\e[32m\2\e[0m\3/g;
+  }
+  # Step 2: Check for PROGRESS lines
+  elsif (/PROGRESS:/) {
+      # Strip out any invisible ANSI escape color sequences injected by yt-dlp
+      s/\e\[[0-9;]*[mK]//g;
+      
+      # Now the regex matches perfectly without getting tripped up by color codes
+      if (/PROGRESS:\s*([^%]+)%\s*:(.*?):(.*?):(.*)$/) {
+          $pct = $1; $total = $2; $speed = $3; $eta = $4;
+          
+          # Clean up whitespace and newlines
+          $pct =~ s/^\s+|\s+$//g;
+          $eta =~ s/[\r\n]//g;
+          
+          # Calculate the 10-character bar
+          $filled = int($pct / 10);
+          $filled = 10 if $filled > 10;
+          $empty = 10 - $filled;
+          #$bar = ("█" x $filled) . ("░" x $empty);
+          $bar = ("░" x $filled) . ("-" x $empty);
+          
+          # Print the shiny new progress bar line
+          $_ = "\x1b[K\r[download] [$bar] $pct% of $total at $speed ETA $eta";
+      }
+  }
+'
+
+	# GREP_COLORS='mt=1;33' grep --color=always -P "(?<=^\[Merger\] Merging formats into \").*?(?=\")|$"
+
+	#~/bin/yt-dlp "$@"   # default ~ install - but these days we need cookies etc modules, so:
+	# we have to use secretstorage module to get browser cookies, which has to have yt-dlp module in SAME env, I use pipx..., ultimately, just need yt-dlp program in your PATH
+	# there's more than one way to achieve this, e.g:
+	# # as root:
+	# apt install pipx
+	# # as user, installing yt-dlp from pipx, then "injecting" the required dependencies:
+	# pipx install yt-dlp
+	# pipx inject yt-dlp secretstorage cryptography curl-cffi
+}
+
+# Command for highest quality video, highest quality audio:
+yth-dlpz () {
+	ytdlpz -f bv+ba/b -S "vcodec,res,fps,vbr,lang:en,abr" "$@"
+}
+
+# Command for lowest bitrate video, highest quality audio:
+ytl-dlpz () {
+	ytdlpz -f bv+ba/b -S "+vbr,res,lang:en,abr" "$@"
+}
+
+# Show install help:
+ytdlpz-help-install () {
+cat << EOF
+____________________________________
+INSTALL:
+
+EOF
+msg_usage "Copy the 4 files (" "libsh-env.sh libsh-msg.sh libsh-yt.sh ytdlpz" ") into"
+cat << EOF
+(for example) your ~/bin/ dir, then create the 3 required symlinks
+with the following 4 commands, and you're all set:
+cd ~/bin/
+ln -s ytdlpz yth-dlpz
+ln -s ytdlpz ytl-dlpz
+ln -s ytdlpz ytp-srt+txt
+EOF
+}
+
+# Show help:
+ytdlpz-usage () {
+	# remind myself that I can add subtitles (I add "subs=..." to .bashrc):
+	msg_usage "____________________________________"
+	msg_usage "Remember \$subs:  " "$SUBS_ARGS"
+	msg_usage "ProTips: --skip-download, and ytp-srt+txt to dl/convert subs to txt.\n"
+
+	msg_usage "Usage:  yth-dlpz ... | ytl-dlpz ... | ytp-srt+txt ...  (create as symlinks to this script file)"
+	msg_usage "  " "yth-dlpz" "    - default to highest quality video, highest quality audio"
+	msg_usage "  " "ytl-dlpz" "    - default to lowest bitrate video, highest quality audio"
+	msg_usage "  " "ytp-srt+txt" " - download subs (if needed), convert subs into a text file"
+	exit 0
+}
+
+# Convert subtitles file into a text file (download first if needed):
+ytp-srt-txt () {
+	for VIDID in ${VIDIDs[*]}; do
+		yt_isValidVideoID "$VIDID" || {
+			msg_error "ytp-srt+txt must have a valid video ID, found" $VIDID
+			continue
+		}
+		# if we already have at least one subs file, process that:
+		yt_findAndConvertSubsFiles && continue
+		# none found so download one (using default "random format" which we don't download):
+		ytldlpz --skip-download $SUBS_ARGS "$@" || continue
+		# and convert it:
+		yt_findAndConvertSubsFiles
+	done
+}
+
+# We need at least one arg to do anything:
+(( $# == 0 )) && { msg_error "Script requires at least 1 arg." ; exit 1 ; }
+
+# The following is technically only needed for ytp-srt-txt(), but I like to see the IDs be output:
+VIDIDs=()
+yt_fromArgs_VIDIDs VIDIDs "$@" || msg_warn "" "Unable to determine an 11 char Youtube video ID."
+msg_info "YouTube video IDs:" "${VIDIDs[*]}"
+
+# If the last arg is requesting help, show usage:
+case "${@: -1}" in
+	help | --help | -h)
+		msg_usage "____________________"
+		yt_lsFilesContainingIDs ${VIDIDs[@]}
+		yt_dumpConf
+		ytdlpz-help-install
+		ytdlpz-usage
+		exit
+		;;
+esac
+
+iam="`basename $0`"
+case "$iam" in
+	ytp-srt+txt) ytp-srt-txt "$@" ;;
+	ytdlpz | yth-dlpz | ytl-dlpz) $iam "$@" ;;
+	*)
+		msg_error "Script/link is named" "$iam" "which is NOT recognized, must be as follows:"
+		ytdlpz-usage
+		exit 1
+		;;
+esac
+
+msg_usage "____________________"
+yt_lsFilesContainingIDs ${VIDIDs[@]}
+
+# CUTS:
+# ..!=none ensures at least one video/audio track are downloaded
+# alternative to do this just in the -f format specifier: "(bv*[vcodec!=none][abr>0]/bv*[vcodec!=none])[vbr=min]+(ba*[acodec!=none]/ba*)" (should work, but it's from AI, might need tweaking)
+# the first version I got actually properly working:
+#echo '-f "bv*[vcodec!=none]+ba*[acodec!=none]" -S "+vbr,abr" --format-sort-force'
+#~/bin/ytydlpz -f "bv*[vcodec!=none]+ba*[acodec!=none]" -S "+vbr,abr" --format-sort-force "$@"
+# simple version tried later, but yt-dlp considers mp4 to be "worse" than av1, regardless of bitrate:
+#echo '-f worstvideo+bestaudio'
+#~/bin/ytydlpz -f worstvideo+bestaudio "$@"
+# third version, more compact, still sorts to easily compare -F output lines:
+# fallback to something combining both audio+video (b, but vis a vis the -S sort order)
+# "bv best video" is in the face of the +vbr reverse video bitrate:
+#echo '-f bv+ba/b -S "+vbr,+res,abr"' - this is now my default in .config/yt-dlp.conf
+# My default in ~/.config/yt-dlp.conf (best English audio and lowest bitrate video) means mistakes are low download cost.
