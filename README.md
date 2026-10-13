@@ -21,7 +21,7 @@ The script symlink names are designed with the leading part optimized for qwerty
 
 `ytl-dlpz Vid_ID` - symlink for default lowest video bitrate + highest audio quality download.
 
-`vids . | xargs mpv --shuffle` - `vids` tries to find all video files from given dir(s), and pipes them in a safe format.
+`vids . | egrep -i 'stomp|swamp' | shuf | head -n100 | xargs mpv` - `vids` tries to find all video files from given dir(s), and pipes them in a safe format.
 
 `ytl-dlpz --sub-langs en --write-auto-sub --sub-format srt Vid_ID` - download (including) subtitles.
 
