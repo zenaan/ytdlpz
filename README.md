@@ -10,6 +10,8 @@ Terminal output is partially colorized to highlight:
 - the actual command being run
 - the resultant filename(s) downloaded
 
+![Help output](Screenshot-20261109-help-output.png)
+
 The download step shows a fixed-width 10 char progress bar.
 
 ![Simple terminal session for `ytl-dlpz` script](Screenshot-20261013.png)
