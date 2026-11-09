@@ -126,7 +126,7 @@ ytdlpz-protips () {
 	msg_usage "Subtitles \$subs:    " "$SUBS_ARGS"
 	msg_usage "Subs/text convert:  " "ytp-srt+txt" " to dl/convert subs to txt."
 	msg_usage "Check for chapters: " "yt... --skip-download --print chapters VIDEO_URL"
-	msg_usage "Add chapters:       " "yt... --remux-video mkv --embed-chapters  VIDEO_URL  [-f ...]"
+	msg_usage "Add chapters:       " "yt... --remux-video mkv --embed-chapters  VIDEO_URL  [-f ...] [-o "orig-filename"]"
 }
 
 # Show help:
