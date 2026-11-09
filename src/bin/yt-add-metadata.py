@@ -192,6 +192,17 @@ def process_video(video_id, existing_file=None):
 
     print(f"Success! Created: {preferred_mkv}")
 
+# This version takes Youtube video IDs, and tries to find files containing them, and will download using yt-dlp otherwise:
+#if __name__ == "__main__":
+#    if len(sys.argv) < 2:
+#        print("Usage: ./embed_metadata.py <VIDEO_ID_1> <VIDEO_ID_2> <VIDEO_ID_3> ...")
+#        sys.exit(1)
+#
+#    # Loop through every ID passed after the script name
+#    for vid_id in sys.argv[1:]:
+#        process_video(vid_id)
+
+# This version takes filenames, and if the file does not contain chapters, it converts it to .mkv and uses yt-dlp to download and insert metadata:
 if __name__ == "__main__":
     import re
 
