@@ -12,6 +12,7 @@
 ytdlpz () {
 	# comment out if not wanted:
 	yt_dumpConf
+	ytdlpz-protips
 	#msg_usage "Remember \$subs:  " "$SUBS_ARGS --skip-download"
 
 	# show me what the resultant yt-dlp command line sort of looks like (without escapes and quotes):
@@ -116,17 +117,21 @@ ln -s ytdlpz ytp-srt+txt
 EOF
 }
 
-# Show help:
-ytdlpz-usage () {
+# Show protips:
+ytdlpz-protips () {
 	# remind myself that I can add subtitles (I add "subs=..." to .bashrc):
 	msg_usage "____________________________________"
-	msg_usage "Remember \$subs:     " "$SUBS_ARGS"
-	msg_usage "Pro Tips:           " "--skip-download"
+	msg_usage "Pro Tips:"
+	msg_usage "Skip download:      " "--skip-download"
+	msg_usage "Subtitles \$subs:    " "$SUBS_ARGS"
 	msg_usage "Subs/text convert:  " "ytp-srt+txt" " to dl/convert subs to txt."
 	msg_usage "Check for chapters: " "yt... --skip-download --print chapters VIDEO_URL"
 	msg_usage "Add chapters:       " "yt... --remux-video mkv --embed-chapters  VIDEO_URL  [-f ...]"
-	echo
+}
 
+# Show help:
+ytdlpz-usage () {
+	msg_usage "____________________________________"
 	msg_usage "Usage:  yth-dlpz ... | ytl-dlpz ... | ytp-srt+txt ...  (create as symlinks to this script file)"
 	msg_usage "  " "yth-dlpz" "    - default to highest quality video, highest quality audio"
 	msg_usage "  " "ytl-dlpz" "    - default to lowest bitrate video, highest quality audio"
@@ -161,10 +166,11 @@ msg_info "YouTube video IDs:" "${VIDIDs[*]}"
 # If the last arg is requesting help, show usage:
 case "${@: -1}" in
 	help | --help | -h)
-		msg_usage "____________________"
 		yt_lsFilesContainingIDs ${VIDIDs[@]}
+		msg_usage "____________________________________"
 		yt_dumpConf
 		ytdlpz-help-install
+		ytdlpz-protips
 		ytdlpz-usage
 		exit
 		;;

@@ -12,8 +12,6 @@ SUBS_ARGS="--sub-langs $SUBS_LANG --write-auto-sub --sub-format $SUBS_FORMAT"
 # Dump yt-dlp.conf for reference:
 yt_dumpConf () {
 	# dump my yt-dlp.conf config with default format etc:
-	msg_usage "____________________"
-
 	YTDLPCONF="$HOME/.config/yt-dlp.conf"
 
 	# simply dump yt-dlp.conf:
@@ -23,9 +21,6 @@ yt_dumpConf () {
 	# dump yt-dlp.conf, stripping all comments and blank lines:
 	msg_usage "Args from $YTDLPCONF :"
 	sed -e 's/#.*//' -e '/^$/d' "$YTDLPCONF"
-
-	# remind user of options to use to download subtitles if wanted:
-	msg_usage "Remember \$subs:  " "$SUBS_ARGS --skip-download"
 }
 
 # Validates if the exact 11-character string is a valid YouTube Video ID format
