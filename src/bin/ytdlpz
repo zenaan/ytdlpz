@@ -120,8 +120,12 @@ EOF
 ytdlpz-usage () {
 	# remind myself that I can add subtitles (I add "subs=..." to .bashrc):
 	msg_usage "____________________________________"
-	msg_usage "Remember \$subs:  " "$SUBS_ARGS"
-	msg_usage "ProTips: --skip-download, and ytp-srt+txt to dl/convert subs to txt.\n"
+	msg_usage "Remember \$subs:     " "$SUBS_ARGS"
+	msg_usage "Pro Tips:           " "--skip-download"
+	msg_usage "Subs/text convert:  " "ytp-srt+txt" " to dl/convert subs to txt."
+	msg_usage "Check for chapters: " "yt... --skip-download --print chapters VIDEO_URL"
+	msg_usage "Add chapters:       " "yt... --remux-video mkv --embed-chapters  VIDEO_URL  [-f ...]"
+	echo
 
 	msg_usage "Usage:  yth-dlpz ... | ytl-dlpz ... | ytp-srt+txt ...  (create as symlinks to this script file)"
 	msg_usage "  " "yth-dlpz" "    - default to highest quality video, highest quality audio"
