@@ -42,6 +42,23 @@ def get_configured_filename(video_id):
 
     return None
 
+def file_has_chapters(file_path):
+    """Uses ffprobe to check if an existing file already contains chapter tracks."""
+    cmd = [
+        "ffprobe", "-v", "error",
+        "-show_chapters",
+        "-print_format", "json",
+        file_path
+    ]
+    out = run_cmd(cmd, capture_output=True)
+    if out:
+        try:
+            data = json.loads(out)
+            return len(data.get('chapters', [])) > 0
+        except json.JSONDecodeError:
+            return False
+    return False
+
 def process_video(video_id, existing_file=None):
     print(f"\n=== Processing Video ID: {video_id} ===")
 
@@ -72,6 +89,9 @@ def process_video(video_id, existing_file=None):
 
     print(f"Found source video: {existing_file}")
     print(f"Target path template: {preferred_mkv}")
+	if existing_file.endswith('.mkv') and file_has_chapters(existing_file):
+        print(f"Skipping {existing_file}: Chapters are already embedded.")
+        return
 
     # 3. Download metadata using yt-dlp
     print("Fetching live chapters, metadata, and thumbnail via yt-dlp...")
