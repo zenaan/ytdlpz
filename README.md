@@ -14,7 +14,7 @@ Terminal output is partially colorized to highlight:
 
 The download step shows a fixed-width 10 char progress bar.
 
-![Simple terminal session for `ytl-dlpz` script](Screenshot-20261013.png)
+![Simple terminal session for `ytl-dlpz` script](Screenshot-20261109-download-example.png)
 
 The script symlink names are designed with the leading part optimized for qwerty keyboard and tab-expansion, to make it as quick as possible to download either high quality or low bitrate video.
 
