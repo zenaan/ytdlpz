@@ -22,7 +22,7 @@ The script symlink names are designed with the leading part optimized for qwerty
 
 `ytl-dlpz Vid_ID` - symlink for default lowest video bitrate + highest audio quality download.
 
-`yt-add-metadata.py Vid_ID` - scripts to add metadata (icon/image, but especially chapters), to a previously downloaded media file (if it exists, will download otherwise).
+`yt-add-metadata.py FILENAME` - script to add metadata (icon/image, but especially chapters), to a previously downloaded media file.
 
 `vids . | egrep -i 'stomp|swamp' | shuf | head -n100 | xargs mpv` - `vids` tries to find all video files from given dir(s), and pipes them in a safe format.
 

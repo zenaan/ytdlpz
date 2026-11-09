@@ -193,13 +193,27 @@ def process_video(video_id, existing_file=None):
     print(f"Success! Created: {preferred_mkv}")
 
 if __name__ == "__main__":
+    import re
+
     if len(sys.argv) < 2:
-        print("Usage:")
-        print("  ./embed_metadata.py <VIDEO_ID>")
-        print("  ./embed_metadata.py <VIDEO_ID> <PATH_TO_EXISTING_FILE>")
+        print("Usage: ./embed_metadata.py <file1.webm> <file2.mp4> <file3.mkv> ...")
         sys.exit(1)
 
-    vid_id = sys.argv[1]
-    file_path = sys.argv[2] if len(sys.argv) > 2 else None
-    process_video(vid_id, file_path)
+    # Loop through every filename passed on the command line
+    for file_path in sys.argv[1:]:
+        if not os.path.exists(file_path):
+            print(f"\nError: File not found: {file_path}")
+            continue
+
+        # Strictly matches an 11-character YouTube ID surrounded by dots: .[ID].
+        # Using lookbehind (?<=\.) and lookahead (?=\.) ensures the dots are present
+        # but are not accidentally captured as part of the ID string itself.
+        match = re.search(r'(?<=\.)([a-zA-Z0-9_-]{11})(?=\.)', os.path.basename(file_path))
+        if not match:
+            print(f"\nSkipping {file_path}: Could not find an 11-character YouTube ID surrounded by periods (e.g., .ID.)")
+            continue
+
+        detected_id = match.group(1)
+        # Execute the main process using the found ID and the exact file path
+        process_video(detected_id, existing_file=file_path)
 
