@@ -1,54 +1,52 @@
 #!/usr/bin/env python3
-
 import json
 import os
 import sys
 import subprocess
 import shutil
+import re
 
 def run_cmd(cmd, capture_output=False):
-    """Helper to run a shell command."""
+    """Helper to run a shell command and print detailed errors if it fails."""
     try:
         res = subprocess.run(
             cmd,
             check=True,
-            stdout=subprocess.PIPE if capture_output else subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            text=True if capture_output else False
+            stdout=subprocess.PIPE if capture_output else None,
+            stderr=subprocess.PIPE,
+            text=True
         )
         return res.stdout if capture_output else True
     except subprocess.CalledProcessError as e:
+        print(f"\n[COMMAND FAILED]: {' '.join(cmd)}")
+        if e.stderr:
+            print(f"[ERROR DETAILS]:\n{e.stderr.strip()}")
         return None if capture_output else False
 
 def get_configured_filename(video_id):
     """Queries yt-dlp to find the filename format specified in the user's config."""
-    # Using --print filename forces yt-dlp to print the evaluated template name accurately
     cmd = [
         "yt-dlp",
         "--print", "filename",
-        f"https://www.youtube.com/watch?v={video_id}"
+        f"https://youtube.com/watch?v={video_id}"
     ]
-
     out = run_cmd(cmd, capture_output=True)
     if out:
-        # Split lines and filter out any status logs/warnings that start with [
         lines = [line.strip() for line in out.split('\n') if line.strip() and not line.strip().startswith('[')]
-
         if lines:
-            # Grab the actual filename template line
             final_line = lines[0]
             base, _ = os.path.splitext(final_line)
             return f"{base}.mkv"
-
     return None
 
 def file_has_chapters(file_path):
     """Uses ffprobe to check if an existing file already contains chapter tracks."""
+    safe_path = file_path if file_path.startswith(("./", "/")) else f"./{file_path}"
     cmd = [
         "ffprobe", "-v", "error",
         "-show_chapters",
         "-print_format", "json",
-        file_path
+        safe_path
     ]
     out = run_cmd(cmd, capture_output=True)
     if out:
@@ -88,30 +86,41 @@ def process_video(video_id, existing_file=None):
         return
 
     print(f"Found source video: {existing_file}")
-    print(f"Target path template: {preferred_mkv}")
-    if existing_file.endswith('.mkv') and file_has_chapters(existing_file):
+
+    # 3. Skip check if the existing file already contains chapters
+    if file_has_chapters(existing_file):
         print(f"Skipping {existing_file}: Chapters are already embedded.")
         return
 
-    # 3. Download metadata using yt-dlp
-    print("Fetching live chapters, metadata, and thumbnail via yt-dlp...")
-    json_name = f"{video_id}_temp"
+    print(f"Target path template: {preferred_mkv}")
 
+    # Define all temporary paths cleanly with an underscore prefix to guard against leading dashes
+    json_name = f"_{video_id}_temp"
+    json_file = f"{json_name}.info.json"
+    chapters_txt = f"_{video_id}_chapters.txt"
+    temp_mkv = f"_{video_id}_temp.mkv"
+
+    # 4. Download metadata using yt-dlp safely bypassing output conflicts
+    print("Fetching live chapters, metadata, and thumbnail via yt-dlp...")
     yt_dlp_cmd = [
         "yt-dlp",
         "--skip-download",
         "--write-info-json",
         "--write-thumbnail",
-        "-o", f"{json_name}.%(ext)s",
-        f"https://www.youtube.com/watch?v={video_id}"
+        "-o", f"./{json_name}.%(ext)s",
     ]
+
+    if "QUIET_MODE" in globals() and QUIET_MODE:
+        yt_dlp_cmd.append("--quiet")
+
+    # Append the URL at the absolute end
+    yt_dlp_cmd.extend(["--", f"https://youtube.com/watch?v={video_id}"])
 
     if not run_cmd(yt_dlp_cmd):
         print("Failed to download metadata from YouTube.")
         return
 
-    json_file = f"{json_name}.info.json"
-
+    # Find the downloaded thumbnail using our prefix variable structure
     thumbnail_file = None
     for f in os.listdir('.'):
         if f.startswith(json_name) and f.endswith(('.jpg', '.jpeg', '.webp', '.png')):
@@ -119,10 +128,10 @@ def process_video(video_id, existing_file=None):
             break
 
     if not os.path.exists(json_file):
-        print("Error: Expected metadata file was not generated.")
+        print("Error: Expected metadata configuration file was not generated.")
         return
 
-    # 4. Load chapters and build standard FFMETADATA file
+    # 5. Load chapters and build standard FFMETADATA file
     with open(json_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
@@ -136,38 +145,40 @@ def process_video(video_id, existing_file=None):
         title = ch['title'].replace('=', '\\=').replace(';', '\\;').replace('#', '\\#').replace('\\', '\\\\')
         ffmeta += f"\n[CHAPTER]\nTIMEBASE=1/1000\nSTART={start_ms}\nEND={end_ms}\ntitle={title}\n"
 
-    chapters_txt = f"{video_id}_chapters.txt"
     with open(chapters_txt, "w", encoding='utf-8') as f:
         f.write(ffmeta)
 
-    # 5. Remux to MKV and inject chapters using FFmpeg
+    # 6. Remux to MKV and inject chapters using FFmpeg
     print("Remuxing container to MKV and injecting chapters...")
-    temp_mkv = f"{video_id}_temp.mkv"
+    safe_input_file = existing_file if existing_file.startswith(("./", "/")) else f"./{existing_file}"
 
     ffmpeg_cmd = [
         "ffmpeg", "-y",
-        "-i", existing_file,
-        "-i", chapters_txt,
+        "-i", safe_input_file,
+        "-i", f"./{chapters_txt}",
         "-map_metadata", "1",
-        "-c", "copy",
-        temp_mkv
+        "-c:v", "copy",
+        "-c:a", "copy",
+        f"./{temp_mkv}"
     ]
 
     if not run_cmd(ffmpeg_cmd):
         print("FFmpeg remuxing and chapter insertion failed.")
         return
 
-    # 6. Inject Cover Art using mkvpropedit
+    # 7. Inject Cover Art using mkvpropedit
     if thumbnail_file and os.path.exists(thumbnail_file):
         print("Embedding thumbnail cover art...")
         mime_type = "image/jpeg" if thumbnail_file.endswith(('.jpg', '.jpeg')) else "image/webp"
         if thumbnail_file.endswith('.png'): mime_type = "image/png"
 
+        # FIX: The target file must be stated first.
+        # Then, use explicit attachment parameter binding to cleanly bundle options.
         mkvprop_cmd = [
-            "mkvpropedit", temp_mkv,
-            "--add-attachment", thumbnail_file,
-            "--set-mime-type", mime_type,
-            "--set-name", f"cover{os.path.splitext(thumbnail_file)}"
+            "mkvpropedit", f"./{temp_mkv}",
+            "--attachment-name", f"cover{os.path.splitext(thumbnail_file)[1]}",
+            "--attachment-mime-type", mime_type,
+            "--add-attachment", f"./{thumbnail_file}"
         ]
         run_cmd(mkvprop_cmd)
 
@@ -177,9 +188,9 @@ def process_video(video_id, existing_file=None):
         os.makedirs(dest_dir, exist_ok=True)
 
     # Move temporary file to your exact configured naming scheme
-    shutil.move(temp_mkv, preferred_mkv)
+    shutil.move(f"./{temp_mkv}", preferred_mkv)
 
-    # 7. Cleanup working file remnants and original videos
+    # 8. Cleanup working file remnants and original videos
     print("Cleaning up temporary and source files...")
     garbage_files = [json_file, chapters_txt, thumbnail_file]
     for g_file in garbage_files:
@@ -192,39 +203,46 @@ def process_video(video_id, existing_file=None):
 
     print(f"Success! Created: {preferred_mkv}")
 
-# This version takes Youtube video IDs, and tries to find files containing them, and will download using yt-dlp otherwise:
-#if __name__ == "__main__":
-#    if len(sys.argv) < 2:
-#        print("Usage: ./embed_metadata.py <VIDEO_ID_1> <VIDEO_ID_2> <VIDEO_ID_3> ...")
-#        sys.exit(1)
-#
-#    # Loop through every ID passed after the script name
-#    for vid_id in sys.argv[1:]:
-#        process_video(vid_id)
-
-# This version takes filenames, and if the file does not contain chapters, it converts it to .mkv and uses yt-dlp to download and insert metadata:
 if __name__ == "__main__":
-    import re
+    # Check if the user passed a quiet flag anywhere on the command line
+    QUIET_MODE = "--quiet" in sys.argv
+    if QUIET_MODE:
+        sys.argv.remove("--quiet")
 
     if len(sys.argv) < 2:
-        print("Usage: ./embed_metadata.py <file1.webm> <file2.mp4> <file3.mkv> ...")
+        print("Usage: ./embed_metadata.py [--quiet] <file1.webm> <file2.mp4> ...")
         sys.exit(1)
 
     # Loop through every filename passed on the command line
     for file_path in sys.argv[1:]:
         if not os.path.exists(file_path):
-            print(f"\nError: File not found: {file_path}")
-            continue
+            # Check if arg itself is an 11-char ID and resolve a match containing it
+            if len(file_path) == 11 and not '.' in file_path:
+                found = False
+                for f in os.listdir('.'):
+                    if file_path in f and any(f.endswith(ext) for ext in ['.webm', '.mp4', '.mkv']):
+                        file_path = f
+                        found = True
+                        break
+                if not found:
+                    print(f"\nError: File or matching ID tracking reference not found: {file_path}")
+                    continue
+            else:
+                print(f"\nError: File not found: {file_path}")
+                continue
 
-        # Strictly matches an 11-character YouTube ID surrounded by dots: .[ID].
-        # Using lookbehind (?<=\.) and lookahead (?=\.) ensures the dots are present
-        # but are not accidentally captured as part of the ID string itself.
+        # Extract 11-character YouTube video ID strictly surrounded by dots: .[ID].
         match = re.search(r'(?<=\.)([a-zA-Z0-9_-]{11})(?=\.)', os.path.basename(file_path))
         if not match:
-            print(f"\nSkipping {file_path}: Could not find an 11-character YouTube ID surrounded by periods (e.g., .ID.)")
-            continue
+            # Fallback check if the raw filename is exactly the 11 character ID or ID.ext
+            base_name, _ = os.path.splitext(os.path.basename(file_path))
+            if len(base_name) == 11:
+                detected_id = base_name
+            else:
+                print(f"\nSkipping {file_path}: Could not find an 11-character YouTube ID surrounded by periods.")
+                continue
+        else:
+            detected_id = match.group(1)
 
-        detected_id = match.group(1)
-        # Execute the main process using the found ID and the exact file path
         process_video(detected_id, existing_file=file_path)
 

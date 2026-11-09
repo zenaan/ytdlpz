@@ -22,7 +22,7 @@ The script symlink names are designed with the leading part optimized for qwerty
 
 `ytl-dlpz Vid_ID` - symlink for default lowest video bitrate + highest audio quality download.
 
-`yt-add-metadata.py FILENAME` - script to add metadata (icon/image, but especially chapters), to a previously downloaded media file. This script assumes the video ID in the filename, is surrounded by a period (".") on each side.
+`yt-add-metadata.py FILENAME` - script to add metadata (icon/image, but especially chapters), to a previously downloaded media file. This script assumes the video ID in the filename, is surrounded by a period (".") on each side. Has a --quiet option.
 
 Example use of yt-add-metadata.py in a pipeline, use PYTHONUNBUFFERED=1 to make python output stdout without 4KB/8KB buffering:
 `ls -rS --zero | tail -z -n15 | head -z -n13 | PYTHONUNBUFFERED=1 xargs -0 -n30 yt-add-metadata.py | tee -p yam.log`
