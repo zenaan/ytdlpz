@@ -89,7 +89,7 @@ def process_video(video_id, existing_file=None):
 
     print(f"Found source video: {existing_file}")
     print(f"Target path template: {preferred_mkv}")
-	if existing_file.endswith('.mkv') and file_has_chapters(existing_file):
+    if existing_file.endswith('.mkv') and file_has_chapters(existing_file):
         print(f"Skipping {existing_file}: Chapters are already embedded.")
         return
 
