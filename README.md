@@ -1,6 +1,6 @@
 # ytdlpz - a yt-dlp wrapper(s)
 
-`yt-dlp` wrapper script, factored `libsh-..` support fns, and symlinks for quick use.
+`yt-dlp` wrapper and other scripts, factored `libsh-..` support fns, and symlinks for quick use.
 
 Terminal output is partially colorized to highlight:
 
@@ -21,6 +21,8 @@ The script symlink names are designed with the leading part optimized for qwerty
 `yth-dlpz Vid_ID` - symlink for default highest quality download.
 
 `ytl-dlpz Vid_ID` - symlink for default lowest video bitrate + highest audio quality download.
+
+`yt-add-metadata.py Vid_ID` - scripts to add metadata (icon/image, but especially chapters), to a previously downloaded media file (if it exists, will download otherwise).
 
 `vids . | egrep -i 'stomp|swamp' | shuf | head -n100 | xargs mpv` - `vids` tries to find all video files from given dir(s), and pipes them in a safe format.
 

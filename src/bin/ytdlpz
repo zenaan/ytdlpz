@@ -11,14 +11,14 @@
 # "Default" command just dumps yt-dlp.conf, shows you your command line args, and runs yt-dlp:
 ytdlpz () {
 	# comment out if not wanted:
+	# show me what the resultant yt-dlp command line sort of looks like (without escapes and quotes):
+	msg_cmd "yt-dlp $*"
+	ytdlpz-line
 	yt_dumpConf
 	ytdlpz-protips
 	#msg_usage "Remember \$subs:  " "$SUBS_ARGS --skip-download"
 
-	# show me what the resultant yt-dlp command line sort of looks like (without escapes and quotes):
-	msg_cmd "yt-dlp $*"
-	msg_usage "____________________"
-
+	ytdlpz-line
 	# the piping through "sed -E" is just to colorize the Merger line in yt-dlp's output,
 	# whilst ignoring the download status updates:
 	#yt-dlp "$@" | sed -u -E "/\[download\]/! s/(^\[Merger\].* \")([^\"]*)(\")/\1\x1b[1;32m\2\x1b[0m\3/"
@@ -101,8 +101,8 @@ ytl-dlpz () {
 
 # Show install help:
 ytdlpz-help-install () {
+	ytdlpz-line
 cat << EOF
-____________________________________
 INSTALL:
 
 EOF
@@ -120,23 +120,29 @@ EOF
 # Show protips:
 ytdlpz-protips () {
 	# remind myself that I can add subtitles (I add "subs=..." to .bashrc):
-	msg_usage "____________________________________"
+	#msg_usage "____________________________________"
+	ytdlpz-line
 	msg_usage "Pro Tips:"
-	msg_usage "Skip download:      " "--skip-download"
-	msg_usage "Subtitles \$subs:    " "$SUBS_ARGS"
-	msg_usage "Subs/text convert:  " "ytp-srt+txt" " to dl/convert subs to txt."
-	msg_usage "Check for chapters: " "yt... --skip-download --print chapters VIDEO_URL"
-	msg_usage "Add chapters:       " "yt... --remux-video mkv --embed-chapters  VIDEO_URL  [-f ...] [-o "orig-filename"]"
+	msg_usage "Skip download:       " "--skip-download"
+	msg_usage "Subtitles \$subs:     " "$SUBS_ARGS"
+	msg_usage "Subs/text convert:   " "ytp-srt+txt" " to dl/convert subs to txt."
+	msg_usage "Chapters exist?:     " "yt... --skip-download --print chapters VIDEO_URL"
+	msg_usage "Add metadata/chapts: " "yt-add-metadata.py VIDEO_URL" " will add to existing file if available"
 }
 
 # Show help:
 ytdlpz-usage () {
-	msg_usage "____________________________________"
+	#msg_usage "____________________________________"
+	ytdlpz-line
 	msg_usage "Usage:  yth-dlpz ... | ytl-dlpz ... | ytp-srt+txt ...  (create as symlinks to this script file)"
 	msg_usage "  " "yth-dlpz" "    - default to highest quality video, highest quality audio"
 	msg_usage "  " "ytl-dlpz" "    - default to lowest bitrate video, highest quality audio"
 	msg_usage "  " "ytp-srt+txt" " - download subs (if needed), convert subs into a text file"
 	exit 0
+}
+
+ytdlpz-line () {
+	msg_usage "____________________"
 }
 
 # Convert subtitles file into a text file (download first if needed):
@@ -158,6 +164,7 @@ ytp-srt-txt () {
 # We need at least one arg to do anything:
 (( $# == 0 )) && { msg_error "Script requires at least 1 arg." ; exit 1 ; }
 
+ytdlpz-line
 # The following is technically only needed for ytp-srt-txt(), but I like to see the IDs be output:
 VIDIDs=()
 yt_fromArgs_VIDIDs VIDIDs "$@" || msg_warn "" "Unable to determine an 11 char Youtube video ID."
@@ -167,7 +174,7 @@ msg_info "YouTube video IDs:" "${VIDIDs[*]}"
 case "${@: -1}" in
 	help | --help | -h)
 		yt_lsFilesContainingIDs ${VIDIDs[@]}
-		msg_usage "____________________________________"
+		ytdlpz-line
 		yt_dumpConf
 		ytdlpz-help-install
 		ytdlpz-protips
@@ -187,7 +194,7 @@ case "$iam" in
 		;;
 esac
 
-msg_usage "____________________"
+ytdlpz-line
 yt_lsFilesContainingIDs ${VIDIDs[@]}
 
 # CUTS:
